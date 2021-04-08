@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainForm(object):
     def setupUi(self, MainForm):
         MainForm.setObjectName("MainForm")
-        MainForm.resize(1096, 480)
+        MainForm.resize(1096, 479)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

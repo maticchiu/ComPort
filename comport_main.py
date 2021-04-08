@@ -12,7 +12,7 @@ import serial.tools.list_ports
 #                   Constant
 ###################################################
 UART_TIMEOUT = 0.1
-READ_MSG_NUM = 60
+READ_MSG_NUM = 200
 INPUT_MASK_HEX = "HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH \
 HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH;_"
 INPUT_MASK_NONE = ""
@@ -52,31 +52,21 @@ class Main(QMainWindow, ui.Ui_MainForm):
         if self.comboBox_ComPort.count() == 1:
             self.Button_Connect()
                 
+        self.radioButton_Hex.toggled.connect(self.Radio_Text_Type)
+        self.radioButton_Ascii.toggled.connect(self.Radio_Text_Type)
+
+                
     #--------------------------------------------------
     #           MainForm virtual function
     #--------------------------------------------------
     def resizeEvent(self, event):
+    
+        self.TextEdit_Resize()
+        
         # Get current MainForm size
         mainform_width = self.frameGeometry().width()
         mainform_height = self.frameGeometry().height()
-        
-        # Set textEdit_hex size
-        textEdit_hex_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 3 / 4
-        textEdit_hex_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
-        self.textEdit_hex.resize(textEdit_hex_width, textEdit_hex_height)
-        
-        label_HexPos_width = textEdit_hex_width
-        self.label_HexPos.resize(label_HexPos_width, self.label_HexPos.frameGeometry().height())
-        
-        # Set textEdit_ascii position and size
-        textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 1 / 4
-        textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
-        textEdit_ascii_x = mainform_width - 10 - textEdit_ascii_width
-        textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
-        self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
-        self.textEdit_ascii.resize(textEdit_ascii_width, textEdit_ascii_height)
-        
-        
+
         # Set groupBox_Tx position
         groupBox_Tx_x = self.groupBox_Tx.frameGeometry().x()
         groupBox_Tx_y = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30
@@ -89,8 +79,8 @@ class Main(QMainWindow, ui.Ui_MainForm):
         
         self.lineEdit_Tx.setInputMask(INPUT_MASK_HEX)
 
-        self.radioButton_Hex.toggled.connect(self.Radio_Text_Type)
-        self.radioButton_Ascii.toggled.connect(self.Radio_Text_Type)
+        # self.radioButton_Hex.toggled.connect(self.Radio_Text_Type)
+        # self.radioButton_Ascii.toggled.connect(self.Radio_Text_Type)
 
     # def mousePressEvent(self, event):
         # if event.button() == Qt.LeftButton:
@@ -166,6 +156,8 @@ class Main(QMainWindow, ui.Ui_MainForm):
             self.label_Tx_HexNum.setVisible(False)
             self.lineEdit_Tx.setInputMask(INPUT_MASK_NONE)
         pass
+        
+        self.TextEdit_Resize()
     
     def SpinBox_FontSize_Set(self):
         self.textEdit_ascii.setFontPointSize(self.spinBox_FontSize.value())
@@ -178,19 +170,41 @@ class Main(QMainWindow, ui.Ui_MainForm):
     #                       Timer
     #--------------------------------------------------
     def Timer_UartRx(self):
-        read_msg = self.comport_sel.read(READ_MSG_NUM)
-        if len(read_msg) == 0:
-            return
         print_ascii = ""
         print_hex = ""
-        for read_byte in read_msg:
-            if read_byte < 0x20 or read_byte > 0x7F:
-                print_ascii += '.'
-            else:
-                print_ascii += chr(read_byte)        
-            print_hex += hex(read_byte)[2:].zfill(2) + " "
-        self.textEdit_hex.append(print_hex)
-        self.textEdit_ascii.append(print_ascii)
+
+        while True:
+            read_msg = self.comport_sel.read(READ_MSG_NUM)
+            if len(read_msg) == 0:
+                if len(print_ascii):
+                    self.textEdit_ascii.append(print_ascii)
+                if len(print_hex):
+                    self.textEdit_hex.append(print_hex)
+                return
+                
+            for read_byte in read_msg:
+                if self.radioButton_Hex.isChecked():
+                    if read_byte < 0x20 or read_byte > 0x7F:
+                        print_ascii += '.'
+                        print_hex += hex(read_byte)[2:].zfill(2) + " "
+                    else:
+                        print_ascii += chr(read_byte)
+                        print_hex += hex(read_byte)[2:].zfill(2) + " "                
+                else:
+                    if read_byte == 0x0D or read_byte == 0x0A:
+                        # print_ascii += chr(read_byte)
+                        print_hex += hex(read_byte)[2:].zfill(2) + " "
+                        if read_byte == 0x0A:
+                            self.textEdit_ascii.append(print_ascii)
+                            self.textEdit_hex.append(print_hex)
+                            print_ascii = ""
+                            print_hex = ""
+                    elif read_byte < 0x20 or read_byte > 0x7F:
+                        print_ascii += '.'
+                        print_hex += hex(read_byte)[2:].zfill(2) + " "
+                    else:
+                        print_ascii += chr(read_byte)
+                        print_hex += hex(read_byte)[2:].zfill(2) + " "                
         
     #--------------------------------------------------
     #               Function implement
@@ -214,6 +228,42 @@ class Main(QMainWindow, ui.Ui_MainForm):
             self.pushButton_Stop.setText("Stopped")
             self.pushButton_Stop.setStyleSheet("background-color:rgb(255,204,204);font: 12pt 'Arial';")
             self.comport_timer.stop()
+
+    def TextEdit_Resize(self):
+        # Get current MainForm size
+        mainform_width = self.frameGeometry().width()
+        mainform_height = self.frameGeometry().height()
+
+        if self.radioButton_Hex.isChecked():
+            self.textEdit_hex.setVisible(True)
+            # Set textEdit_hex size
+            textEdit_hex_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 3 / 4
+            textEdit_hex_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            self.textEdit_hex.resize(textEdit_hex_width, textEdit_hex_height)
+            
+            label_HexPos_width = textEdit_hex_width
+            self.label_HexPos.resize(label_HexPos_width, self.label_HexPos.frameGeometry().height())
+            
+            # Set textEdit_ascii position and size
+            textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 1 / 4
+            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            textEdit_ascii_x = mainform_width - 10 - textEdit_ascii_width
+            textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
+            self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
+            self.textEdit_ascii.resize(textEdit_ascii_width, textEdit_ascii_height)
+            
+        else:
+            self.textEdit_hex.setVisible(False)
+            # Set textEdit_ascii position and size
+            textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10)
+            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            textEdit_ascii_x = mainform_width - textEdit_ascii_width - 20
+            textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
+            self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
+            self.textEdit_ascii.resize(textEdit_ascii_width, textEdit_ascii_height)
+
+
+
 
 ###################################################
 #                   Main function
