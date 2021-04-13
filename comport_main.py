@@ -52,8 +52,11 @@ class Main(QMainWindow, ui.Ui_MainForm):
         if self.comboBox_ComPort.count() == 1:
             self.Button_Connect()
                 
-        self.radioButton_Hex.toggled.connect(self.Radio_Text_Type)
-        self.radioButton_Ascii.toggled.connect(self.Radio_Text_Type)
+        self.radioButton_Hex.toggled.connect(self.Radio_Tx_Type)
+        self.radioButton_Ascii.toggled.connect(self.Radio_Tx_Type)
+
+        self.radioButton_Text_Hex.toggled.connect(self.Radio_Text_Type)
+        self.radioButton_Text_Ascii.toggled.connect(self.Radio_Text_Type)
 
                 
     #--------------------------------------------------
@@ -69,7 +72,7 @@ class Main(QMainWindow, ui.Ui_MainForm):
 
         # Set groupBox_Tx position
         groupBox_Tx_x = self.groupBox_Tx.frameGeometry().x()
-        groupBox_Tx_y = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30
+        groupBox_Tx_y = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 10
         self.groupBox_Tx.move(groupBox_Tx_x, groupBox_Tx_y)
 
         # reg=QRegExp('[a-fA-F0-9]{,2}[ ]')
@@ -145,19 +148,20 @@ class Main(QMainWindow, ui.Ui_MainForm):
         self.lineEdit_Tx.clear()
         pass
         
-    def Radio_Text_Type(self):
-        # radioBtn = self.sender()
+    def Radio_Text_Type(self):      
+        self.TextEdit_Resize()
+    
+    def Radio_Tx_Type(self):
         if self.sender() == self.radioButton_Hex and self.radioButton_Hex.isChecked():
-            print("hex")
+            # print("hex")
             self.label_Tx_HexNum.setVisible(True)
             self.lineEdit_Tx.setInputMask(INPUT_MASK_HEX)
         elif self.sender() == self.radioButton_Ascii and self.radioButton_Ascii.isChecked():
-            print("ascii")
+            # print("ascii")
             self.label_Tx_HexNum.setVisible(False)
             self.lineEdit_Tx.setInputMask(INPUT_MASK_NONE)
-        pass
-        
-        self.TextEdit_Resize()
+        pass    
+    
     
     def SpinBox_FontSize_Set(self):
         self.textEdit_ascii.setFontPointSize(self.spinBox_FontSize.value())
@@ -234,11 +238,11 @@ class Main(QMainWindow, ui.Ui_MainForm):
         mainform_width = self.frameGeometry().width()
         mainform_height = self.frameGeometry().height()
 
-        if self.radioButton_Hex.isChecked():
+        if self.radioButton_Text_Hex.isChecked():
             self.textEdit_hex.setVisible(True)
             # Set textEdit_hex size
             textEdit_hex_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 3 / 4
-            textEdit_hex_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            textEdit_hex_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20
             self.textEdit_hex.resize(textEdit_hex_width, textEdit_hex_height)
             
             label_HexPos_width = textEdit_hex_width
@@ -246,7 +250,7 @@ class Main(QMainWindow, ui.Ui_MainForm):
             
             # Set textEdit_ascii position and size
             textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 1 / 4
-            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20
             textEdit_ascii_x = mainform_width - 10 - textEdit_ascii_width
             textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
             self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
@@ -256,7 +260,7 @@ class Main(QMainWindow, ui.Ui_MainForm):
             self.textEdit_hex.setVisible(False)
             # Set textEdit_ascii position and size
             textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10)
-            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20 - 10
+            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 20
             textEdit_ascii_x = mainform_width - textEdit_ascii_width - 20
             textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
             self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
