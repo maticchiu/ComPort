@@ -27,6 +27,10 @@ class Main(QMainWindow, ui.Ui_MainForm):
         
         self.groupBox_Tx.setEnabled(False)
         
+        self.focus_object = None
+        
+        self.textEdit_ascii.setWordWrapMode(QTextOption.WrapAnywhere)
+        
         # Serial port setting
         self.pushButton_Connect.clicked.connect(self.Button_Connect) 
         self.Comport_Set()
@@ -57,8 +61,15 @@ class Main(QMainWindow, ui.Ui_MainForm):
 
         self.radioButton_Text_Hex.toggled.connect(self.Radio_Text_Type)
         self.radioButton_Text_Ascii.toggled.connect(self.Radio_Text_Type)
+        
+        self.textEdit_ascii.verticalScrollBar().valueChanged.connect(self.textEdit_hex.verticalScrollBar().setValue)
+        self.textEdit_hex.verticalScrollBar().valueChanged.connect(self.textEdit_ascii.verticalScrollBar().setValue)
 
-                
+        self.textEdit_hex.selectionChanged.connect(self.textEdit_hex_selectionChanged)
+        self.textEdit_ascii.selectionChanged.connect(self.textEdit_ascii_selectionChanged)
+        
+        QtWidgets.qApp.focusChanged.connect(self.MainForm_FocusChanged)
+        
     #--------------------------------------------------
     #           MainForm virtual function
     #--------------------------------------------------
@@ -170,6 +181,50 @@ class Main(QMainWindow, ui.Ui_MainForm):
         label_HexPos_font.setPointSize(self.spinBox_FontSize.value())
         self.label_HexPos.setFont(label_HexPos_font)
         pass
+
+    def textEdit_hex_selectionChanged(self):
+    
+        if self.focus_object != self.textEdit_hex:
+            return
+    
+        cursor = self.textEdit_hex.textCursor()  
+    
+        start = (cursor.selectionStart() + cursor.blockNumber() * 2) / 3
+        end = (cursor.selectionEnd() + cursor.blockNumber() * 2) / 3
+    
+        textEdit_ascii_cursor = self.textEdit_hex.textCursor()
+        textEdit_ascii_cursor.setPosition(start) 
+        textEdit_ascii_cursor.setPosition(end, QTextCursor.KeepAnchor) 
+        self.textEdit_ascii.setTextCursor(textEdit_ascii_cursor)
+    
+    def textEdit_ascii_selectionChanged(self):
+    
+        if self.focus_object != self.textEdit_ascii:
+            return
+    
+        cursor = self.textEdit_ascii.textCursor()  
+    
+        start = cursor.selectionStart() * 3 - cursor.blockNumber() * 2
+        end = cursor.selectionEnd() * 3 - cursor.blockNumber() * 2
+    
+        textEdit_hex_cursor = self.textEdit_hex.textCursor()
+        textEdit_hex_cursor.setPosition(start) 
+        textEdit_hex_cursor.setPosition(end, QTextCursor.KeepAnchor) 
+        self.textEdit_hex.setTextCursor(textEdit_hex_cursor)
+
+    def MainForm_FocusChanged(self, old, now):
+
+        if now == self.textEdit_hex:
+            self.focus_object = self.textEdit_hex
+            print("textEdit_hex")
+        elif now == self.textEdit_ascii:
+            self.focus_object = self.textEdit_ascii
+            print("textEdit_ascii")
+        else:
+            self.focus_object = None
+            print("None")
+
+        
     #--------------------------------------------------
     #                       Timer
     #--------------------------------------------------

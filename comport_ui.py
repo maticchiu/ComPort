@@ -72,7 +72,6 @@ class Ui_MainForm(object):
         font.setBold(True)
         font.setWeight(75)
         self.textEdit_ascii.setFont(font)
-        self.textEdit_ascii.setLineWrapMode(QtWidgets.QTextEdit.WidgetWidth)
         self.textEdit_ascii.setReadOnly(True)
         self.textEdit_ascii.setObjectName("textEdit_ascii")
         self.groupBox_Setting = QtWidgets.QGroupBox(MainForm)

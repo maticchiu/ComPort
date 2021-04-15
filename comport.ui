@@ -136,9 +136,6 @@
      <bold>true</bold>
     </font>
    </property>
-   <property name="lineWrapMode">
-    <enum>QTextEdit::WidgetWidth</enum>
-   </property>
    <property name="readOnly">
     <bool>true</bool>
    </property>
@@ -162,9 +159,6 @@
      <weight>75</weight>
      <bold>true</bold>
     </font>
-   </property>
-   <property name="lineWrapMode">
-    <enum>QTextEdit::WidgetWidth</enum>
    </property>
    <property name="readOnly">
     <bool>true</bool>
