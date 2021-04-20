@@ -1,2 +1,2 @@
-pyuic5 -x comport.ui -o comport_ui.py
+pyuic5 -x comport_window.ui -o comport_window_ui.py
 pause
