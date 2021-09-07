@@ -147,7 +147,7 @@ class Ui_MainWindow(object):
         self.textEdit_ascii.setObjectName("textEdit_ascii")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1104, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1104, 22))
         self.menubar.setObjectName("menubar")
         self.menuSettings = QtWidgets.QMenu(self.menubar)
         self.menuSettings.setObjectName("menuSettings")
@@ -173,12 +173,17 @@ class Ui_MainWindow(object):
         self.action_Tx_Ascii = QtWidgets.QAction(MainWindow)
         self.action_Tx_Ascii.setCheckable(True)
         self.action_Tx_Ascii.setObjectName("action_Tx_Ascii")
+        self.action_Rx_AttachCurrentTime = QtWidgets.QAction(MainWindow)
+        self.action_Rx_AttachCurrentTime.setCheckable(True)
+        self.action_Rx_AttachCurrentTime.setObjectName("action_Rx_AttachCurrentTime")
         self.menuText_Window.addAction(self.action_Text_Hex)
         self.menuText_Window.addAction(self.action_Text_Ascii)
         self.menuUart_Tx_Type.addAction(self.action_Tx_Hex)
         self.menuUart_Tx_Type.addAction(self.action_Tx_Ascii)
         self.menuSettings.addAction(self.menuText_Window.menuAction())
         self.menuSettings.addAction(self.menuUart_Tx_Type.menuAction())
+        self.menuSettings.addSeparator()
+        self.menuSettings.addAction(self.action_Rx_AttachCurrentTime)
         self.menubar.addAction(self.menuSettings.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -210,6 +215,7 @@ class Ui_MainWindow(object):
         self.action_Text_Ascii.setText(_translate("MainWindow", "ASCII"))
         self.action_Tx_Hex.setText(_translate("MainWindow", "Hex"))
         self.action_Tx_Ascii.setText(_translate("MainWindow", "ASCII"))
+        self.action_Rx_AttachCurrentTime.setText(_translate("MainWindow", "Attach Current Time"))
 
 
 if __name__ == "__main__":

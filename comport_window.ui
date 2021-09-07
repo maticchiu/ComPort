@@ -381,7 +381,7 @@
      <x>0</x>
      <y>0</y>
      <width>1104</width>
-     <height>18</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">
@@ -404,6 +404,8 @@
     </widget>
     <addaction name="menuText_Window"/>
     <addaction name="menuUart_Tx_Type"/>
+    <addaction name="separator"/>
+    <addaction name="action_Rx_AttachCurrentTime"/>
    </widget>
    <addaction name="menuSettings"/>
   </widget>
@@ -454,6 +456,14 @@
    </property>
    <property name="text">
     <string>ASCII</string>
+   </property>
+  </action>
+  <action name="action_Rx_AttachCurrentTime">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Attach Current Time</string>
    </property>
   </action>
  </widget>

@@ -7,6 +7,7 @@ from PyQt5.QtCore import QRegExp
 import comport_window_ui as ui
 
 import serial.tools.list_ports
+from datetime import datetime
 
 ###################################################
 #                   Constant
@@ -272,14 +273,18 @@ class Main(QMainWindow, ui.Ui_MainWindow):
     def timer_UartRx(self):
         print_ascii = ""
         print_hex = ""
+        now = ""
+
+        if self.action_Rx_AttachCurrentTime.isChecked():
+            now = datetime.now().strftime("%d/%m/%Y %H:%M:%S - ")
 
         while True:
             read_msg = self.comport_sel.read(READ_MSG_NUM)
             if len(read_msg) == 0:
                 if len(print_ascii):
-                    self.textEdit_ascii.append(print_ascii)
+                    self.textEdit_ascii.append(now + print_ascii)
                 if len(print_hex):
-                    self.textEdit_hex.append(print_hex)
+                    self.textEdit_hex.append(now + print_hex)
                 return
                 
             for read_byte in read_msg:
