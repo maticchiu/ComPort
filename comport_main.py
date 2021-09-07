@@ -276,15 +276,19 @@ class Main(QMainWindow, ui.Ui_MainWindow):
         now = ""
 
         if self.action_Rx_AttachCurrentTime.isChecked():
-            now = datetime.now().strftime("%d/%m/%Y %H:%M:%S - ")
+            now = datetime.now().strftime("%Y%m%d %H%M%S - ")
 
         while True:
             read_msg = self.comport_sel.read(READ_MSG_NUM)
             if len(read_msg) == 0:
                 if len(print_ascii):
-                    self.textEdit_ascii.append(now + print_ascii)
+                    if self.action_Text_Ascii.isChecked():
+                        print_ascii = now + print_ascii
+                    self.textEdit_ascii.append(print_ascii)
                 if len(print_hex):
-                    self.textEdit_hex.append(now + print_hex)
+                    if self.action_Text_Hex.isChecked():
+                        print_hex = now + print_hex
+                    self.textEdit_hex.append(print_hex)
                 return
                 
             for read_byte in read_msg:
