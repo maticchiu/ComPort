@@ -2,13 +2,13 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtCore import QRegExp
 
-import comport_window_ui as ui
+import ui.form.comport_window_ui as ui
 
 import serial.tools.list_ports
+import serial
 from datetime import datetime
-import re
+
 
 ###################################################
 #                   Constant
@@ -17,8 +17,8 @@ import re
 TX_TYPE_HEX = 0
 TX_TYPE_ASCII = 1
 
-UART_TIMEOUT = 0.1
-READ_MSG_NUM = 200
+UART_TIMEOUT = 0.01
+READ_MSG_NUM = 10   # 200
 INPUT_MASK_HEX = "HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH \
 HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH HH;_"
 INPUT_MASK_NONE = ""
@@ -334,7 +334,7 @@ class Main(QMainWindow, ui.Ui_MainWindow):
             self.pushButton_Stop.setText("Reading")
             self.pushButton_Stop.setStyleSheet(";background-color:rgb(204,239,220);font: 12pt 'Arial';")
             self.comport_sel.flushInput()
-            self.comport_timer.start(200)
+            self.comport_timer.start(10)
         else:
             self.pushButton_Stop.setText("Stopped")
             self.pushButton_Stop.setStyleSheet("background-color:rgb(255,204,204);font: 12pt 'Arial';")
@@ -348,16 +348,16 @@ class Main(QMainWindow, ui.Ui_MainWindow):
         if self.action_Text_Hex.isChecked():
             self.textEdit_hex.setVisible(True)
             # Set textEdit_hex size
-            textEdit_hex_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 3 / 4
-            textEdit_hex_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 60
+            textEdit_hex_width = int((mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 3 / 4)
+            textEdit_hex_height = int((mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 60)
             self.textEdit_hex.resize(textEdit_hex_width, textEdit_hex_height)
             
             label_HexPos_width = textEdit_hex_width
             self.label_HexPos.resize(label_HexPos_width, self.label_HexPos.frameGeometry().height())
             
             # Set textEdit_ascii position and size
-            textEdit_ascii_width = (mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 1 / 4
-            textEdit_ascii_height = (mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 60
+            textEdit_ascii_width = int((mainform_width - self.groupBox_Comport.frameGeometry().width() - 10 - 10 - 10 - 10) * 1 / 4)
+            textEdit_ascii_height = int((mainform_height - 30) - self.groupBox_Tx.frameGeometry().height() - 30 - 60)
             textEdit_ascii_x = mainform_width - 10 - textEdit_ascii_width
             textEdit_ascii_y = self.textEdit_ascii.frameGeometry().y()
             self.textEdit_ascii.move(textEdit_ascii_x, textEdit_ascii_y)
