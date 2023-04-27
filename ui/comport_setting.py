@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -18,23 +18,25 @@ class ComPort():
 
         self.comport = serial.Serial()
 
+        # self.combobox_comport.activated.connect(self.combobox_activated_update)
+        # self.combobox_comport.view().pressed.connect(self.combobox_activated_update)
+
     def comport_ToggleConnect(self):
-        if self.comport.is_open:
-            self.comport.close()
-            self.button_connect.setText("Disconnected")
-            self.button_connect.setStyleSheet("background-color:rgb(255,204,204);font: 12pt 'Arial';")
+        print(f"com = {self.combobox_comport.currentText()}")
+        if not self.isExist(self.combobox_comport.currentText()):
+            print(f"com doesn't exist")
+            self.combobox_comport.removeItem(self.combobox_comport.currentIndex())
+            # self.combobox_comport.setCurrentText("")
+            self.close()
+        elif self.comport.is_open:
+            print(f"com is going to close")
+            self.close()
         elif self.combobox_comport.currentText() != "":
-            # Open COM Port
-            self.comport.baudrate = int(self.combobox_baudrate.currentText())
-            self.comport.port = self.combobox_comport.currentText()
-            self.comport.timeout = UART_TIMEOUT
-            self.comport.open()
-            
-            self.button_connect.setText("Connected")
-            self.button_connect.setStyleSheet("background-color:rgb(204,239,220);font: 12pt 'Arial';")
+            print(f"com is going to open")
+            self.open()
 
     def updateComboBox(self):
-        def isPortUsable(port_name:str):
+        def isPortUsable(port_name:str)->bool:
             try:
                 ser = serial.Serial(port_name)
                 return True
@@ -45,10 +47,22 @@ class ComPort():
         if self.comport.is_open:
             self.combobox_comport.addItem(self.comport.name)
         else:
-            self.com_port_list = serial.tools.list_ports.comports()
-            for com_port_item in self.com_port_list:
-                if isPortUsable(com_port_item.name):
-                    self.combobox_comport.addItem(com_port_item.name)
+            # for com_port_item in serial.tools.list_ports.comports():
+            #     if isPortUsable(com_port_item.name):
+            #         self.combobox_comport.addItem(com_port_item.name)
+            for com_port_name in self.getComNameList():
+                if isPortUsable(com_port_name):
+                    self.combobox_comport.addItem(com_port_name)
+
+    def getComNameList(self):
+        # comport_name_list = [comport.name for comport in serial.tools.list_ports.comports()]
+        # comport_desc_list = [comport.description for comport in serial.tools.list_ports.comports()]
+        # print(f"comport_desc_list = {comport_desc_list}")
+        comport_name_list = []
+        for com_port in serial.tools.list_ports.comports():
+            if "JLink" not in com_port.description:
+                comport_name_list.append(com_port.name)
+        return comport_name_list
 
     def read_all(self):
         return self.comport.read_all()
@@ -56,8 +70,39 @@ class ComPort():
     def flush(self):
         self.comport.flush()
 
+    def open(self):
 
+        if not self.comport.is_open:
+            self.comport.baudrate = int(self.combobox_baudrate.currentText())
+            self.comport.port = self.combobox_comport.currentText()
+            self.comport.timeout = UART_TIMEOUT
+            self.comport.open()
+
+        if self.comport.is_open:
+            self.combobox_comport.setEnabled(False)
+            self.button_connect.setText("Connected")
+            self.button_connect.setStyleSheet("background-color:rgb(204,239,220);font: 12pt 'Arial';")
+        else:
+            self.combobox_comport.setEnabled(True)
+            self.button_connect.setText("Disconnected")
+            self.button_connect.setStyleSheet("background-color:rgb(255,204,204);font: 12pt 'Arial';")
+
+    def close(self):
+        self.combobox_comport.setEnabled(True)
+        self.button_connect.setText("Disconnected")
+        self.button_connect.setStyleSheet("background-color:rgb(255,204,204);font: 12pt 'Arial';")
+        if not self.comport.is_open:
+            return
+        self.comport.close()
+        self.updateComboBox()
+
+    def isExist(self, comport_name:str):
+        comport_name_list = self.getComNameList()
+        print(f"isExist: comport_name = {comport_name}, list = {comport_name_list}")
+        return comport_name in comport_name_list
+    
 class Uart(QWidget, Ui_Form_ComPortSetting):
+    signal_update_uart = pyqtSignal()
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -72,6 +117,11 @@ class Uart(QWidget, Ui_Form_ComPortSetting):
         self.com_0.updateComboBox()
         self.com_1.updateComboBox()
         return super().show()
+    
+    def closeEvent(self, a0: QCloseEvent) -> None:
+        self.signal_update_uart.emit()
+        print(f"close uart setting")
+        return super().closeEvent(a0)
 
     #
     #           Connection
@@ -110,15 +160,23 @@ class Uart(QWidget, Ui_Form_ComPortSetting):
 
     def autoConnect(self):
         self.com_0.updateComboBox()
-        self.com_0.comport_ToggleConnect()
+        # self.com_0.comport_ToggleConnect()
+        self.com_0.open()
         self.com_1.updateComboBox()
-        self.com_1.comport_ToggleConnect()
+        # self.com_1.comport_ToggleConnect()
+        self.com_1.open()
 
     def getName_Com0(self):
         return self.com_0.comport.name
 
     def getName_Com1(self):
         return self.com_1.comport.name
+    
+    def close_Com0(self):
+        return self.com_0.close()
+
+    def close_Com1(self):
+        return self.com_1.close()
 
 ###################################################
 #                   Main function

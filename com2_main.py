@@ -23,7 +23,6 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         super().__init__()
         self.setupUi(self)
 
-        # self.setStyleSheet("background-color:rgb(0,0,0);font: 10pt 'Courier New';")
         self.setStyleSheet("background-color:rgb(0,0,0);")
         self.font().setFamily('Courier New')
         self.font().setPointSize(10)
@@ -36,26 +35,18 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         self.timestamp_enable = True
         self.read_uart_message = True
 
-        self.textEdit_rx_0 = QTextEdit(self)
-        self.textEdit_rx_1 = QTextEdit(self)
-        # self.textEdit_rx_0.setReadOnly(True)
-        # self.textEdit_rx_1.setReadOnly(True)
-        # self.textEdit_rx_0.textChanged.connect(self.textedit_TextChanged)
-        # self.textEdit_rx_1.textChanged.connect(self.textedit_TextChanged)
-        # self.textEdit_rx_0.setStyleSheet("color:rgb(0,170,0)")
-        # self.textEdit_rx_1.setStyleSheet("color:rgb(0,170,0)")
+        self.textEdit_com0 = QTextEdit(self)
+        self.textEdit_com1 = QTextEdit(self)
 
-
-        self.textedit_Resize()
-
-        self.auto_scrollbar_enable = True
         self.uarts = Uart()
 
-        self.timer_comport0 = QTimer(self)
-        self.timer_comport1 = QTimer(self)
+        self.uarts.signal_update_uart.connect(self.signal_update_uart_status)
 
-        self.timer_comport0.timeout.connect(self.timer_UartRx0)
-        self.timer_comport1.timeout.connect(self.timer_UartRx1)
+        self.timer_com0 = QTimer(self)
+        self.timer_com1 = QTimer(self)
+
+        self.timer_com0.timeout.connect(self.timer_Rx_Com0)
+        self.timer_com1.timeout.connect(self.timer_Rx_Com1)
 
         self.message_form = MessageForm()
 
@@ -68,15 +59,15 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
             textedit.setFontFamily('Courier New')
             textedit.setFontPointSize(self.font_size)
 
-        initTextEdit(self.textEdit_rx_0)
-        initTextEdit(self.textEdit_rx_1)
+        initTextEdit(self.textEdit_com0)
+        initTextEdit(self.textEdit_com1)
 
-        # self.uarts.show()
         self.uarts.autoConnect()
-        self.setWindowTitle(f"{self.uarts.getName_Com0()} - {self.uarts.getName_Com1()}")
+        self.textedit_Resize()
+        self.updateWindowTitle()
 
-        self.timer_comport0.start(100)
-        self.timer_comport1.start(100)
+        self.timer_com0.start(100)
+        self.timer_com1.start(100)
 
     #
     #           Window Event
@@ -90,30 +81,28 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         self.uarts.close()
         return super().closeEvent(a0)
 
-    def timer_UartRx0(self):
-        if self.read_uart_message:
-            self.receive_msg(self.textEdit_rx_0, self.uarts.readComport0)
-
-
-    def timer_UartRx1(self):
-        if self.read_uart_message:
-            self.receive_msg(self.textEdit_rx_1, self.uarts.readComport1)
-
     #
     #           Connection
     #
     def textedit_TextChanged(self):
-        self.textEdit_rx_0.verticalScrollBar().setValue(self.textEdit_rx_0.verticalScrollBar().maximum())
-        self.textEdit_rx_1.verticalScrollBar().setValue(self.textEdit_rx_1.verticalScrollBar().maximum())
-        # print(f"time = {datetime.datetime.now()}, max = {self.textEdit_rx_1.verticalScrollBar().maximum()}")
+        self.textEdit_com0.verticalScrollBar().setValue(self.textEdit_com0.verticalScrollBar().maximum())
+        self.textEdit_com1.verticalScrollBar().setValue(self.textEdit_com1.verticalScrollBar().maximum())
 
+    def timer_Rx_Com0(self):
+        if self.read_uart_message:
+            self.receive_msg(self.textEdit_com0, self.uarts.readComport0)
+
+    def timer_Rx_Com1(self):
+        if self.read_uart_message:
+            self.receive_msg(self.textEdit_com1, self.uarts.readComport1)
+
+    def signal_update_uart_status(self):
+        self.updateWindowTitle()
 
     #
     #           Hotkey
     #
     def keyPressEvent(self, key_event: QKeyEvent) -> None:
-        print(f"Pressed key = {hex(key_event.key())}")
-
         if key_event.modifiers() & Qt.ControlModifier:
             self.runCtrlKeyEvent(key_event.key())
         else:
@@ -122,10 +111,10 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         return super().keyPressEvent(key_event)
     
     def runSingleKeyEvent(self, pressed_key):
-
+        print(f"Single key = ({hex(pressed_key)})")
         match pressed_key:
             case Qt.Key.Key_F1:     # Show message form
-                self.message_form.show()
+                self.showHotKeyList()
             case Qt.Key.Key_F2:
                 self.uarts.show()
             case Qt.Key.Key_1:
@@ -135,51 +124,49 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
             case Qt.Key.Key_3:
                 self.setConsoleIndex(Console.INDEX_ALL)
             case Qt.Key.Key_C:
-                if self.current_console == Console.INDEX_0 or self.current_console == Console.INDEX_ALL:
-                    self.textEdit_rx_0.clear()
+                if self.current_console == Console.INDEX_0 or self.current_console == Console.INDEX_ALL or self.uart_num == 1:
+                    self.textEdit_com0.clear()
                     self.uarts.flushComport0()
-                if self.current_console == Console.INDEX_1 or self.current_console == Console.INDEX_ALL:
-                    self.textEdit_rx_1.clear()
+                if self.uart_num == 2 and (self.current_console == Console.INDEX_1 or self.current_console == Console.INDEX_ALL):
+                    self.textEdit_com1.clear()
                     self.uarts.flushComport1()
-                self.statusbar.showMessage("Clear log")
+                self.statusbar.showMessage("Clear message")
             case Qt.Key.Key_T:
                 self.timestamp_enable = not self.timestamp_enable
 
     def runCtrlKeyEvent(self, pressed_key):
-        def setFontSize(font_size):
-            cursor_rx0 = self.textEdit_rx_0.textCursor()
-            self.textEdit_rx_0.selectAll()
-            self.textEdit_rx_0.setFontPointSize(font_size)
-            self.textEdit_rx_0.setTextCursor(cursor_rx0)
-            self.textEdit_rx_0.setFontPointSize(font_size)
-            cursor_rx1 = self.textEdit_rx_1.textCursor()
-            self.textEdit_rx_1.selectAll()
-            self.textEdit_rx_1.setFontPointSize(font_size)
-            self.textEdit_rx_1.setTextCursor(cursor_rx1)
-            self.textEdit_rx_1.setFontPointSize(font_size)
+        def setFontSize(textedit:QTextEdit, font_size:int):
+            cursor_rx = textedit.textCursor()
+            textedit.selectAll()
+            textedit.setFontPointSize(font_size)
+            textedit.setTextCursor(cursor_rx)
+            textedit.setFontPointSize(font_size)
 
-            # self.textEdit_rx_1.setFontPointSize(self.font_size)
-
-        # print(f"ctrl + key ({hex(pressed_key)})")
+        print(f"ctrl key = ({hex(pressed_key)})")
         match pressed_key:
             case Qt.Key.Key_PageUp:
                 if self.font_size < 24:
                     self.font_size += 2
-                    # self.textEdit_rx_0.setFontPointSize(self.font_size)
-                    # self.textEdit_rx_1.setFontPointSize(self.font_size)
-                    setFontSize(self.font_size)
+                if self.current_console == Console.INDEX_0 or self.current_console == Console.INDEX_ALL:
+                    setFontSize(self.textEdit_com0, self.font_size)
+                if self.current_console == Console.INDEX_1 or self.current_console == Console.INDEX_ALL:
+                    setFontSize(self.textEdit_com1, self.font_size)
                 self.statusbar.showMessage(f"Font size = {self.font_size}")
             case Qt.Key.Key_PageDown:
                 if self.font_size > 8:
                     self.font_size -= 2
-                    # self.textEdit_rx_0.setFontPointSize(self.font_size)
-                    # self.textEdit_rx_1.setFontPointSize(self.font_size)
-                    setFontSize(self.font_size)
+                if self.current_console == Console.INDEX_0 or self.current_console == Console.INDEX_ALL:
+                    setFontSize(self.textEdit_com0, self.font_size)
+                if self.current_console == Console.INDEX_1 or self.current_console == Console.INDEX_ALL:
+                    setFontSize(self.textEdit_com1, self.font_size)
                 self.statusbar.showMessage(f"Font size = {self.font_size}")
             case Qt.Key.Key_S:
-                self.uarts.switchComports()
-                self.setWindowTitle(f"{self.uarts.getName_Com0()} - {self.uarts.getName_Com1()}")
-                self.statusbar.showMessage("Switch com ports")
+                if self.uart_num == 1:
+                    self.statusbar.showMessage("No switch. Only 1 com port.")
+                elif self.uart_num == 2:
+                    self.uarts.switchComports()
+                    self.statusbar.showMessage("Switch com ports")
+                self.updateWindowTitle()
             case Qt.Key.Key_R:
                 self.uarts.flushComport0()
                 self.uarts.flushComport1()
@@ -190,33 +177,58 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
                     self.statusbar.showMessage("Stop reading uart")
             case Qt.Key.Key_L:
                 if self.uarts.getName_Com0() != "":
-                    self.saveLog(self.uarts.getName_Com0(), self.textEdit_rx_0.toPlainText())
-                if self.uarts.getName_Com1() != "":
-                    self.saveLog(self.uarts.getName_Com1(), self.textEdit_rx_0.toPlainText())
+                    self.saveLog(self.uarts.getName_Com0(), self.textEdit_com0.toPlainText())
+                if self.uarts.getName_Com1() != "" and self.uart_num == 2:
+                    self.saveLog(self.uarts.getName_Com1(), self.textEdit_com0.toPlainText())
+                path = os.path.realpath("./log")
+                os.startfile(path)
                 self.statusbar.showMessage("Save log to ./log")
             case Qt.Key.Key_A:
                 self.uarts.autoConnect()
-                self.setWindowTitle(f"{self.uarts.getName_Com0()} - {self.uarts.getName_Com1()}")
-
+                self.updateWindowTitle()
+            case Qt.Key.Key_1:
+                self.uart_num = 1
+                self.uarts.close_Com1()
+                self.textedit_Resize()
+            case Qt.Key.Key_2:
+                self.uart_num = 2
+                self.uarts.autoConnect()
+                self.textedit_Resize()
+            case Qt.Key.Key_T:
+                if self.windowFlags() & Qt.WindowStaysOnTopHint:
+                    self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
+                    print("Windows normally")
+                else:
+                    self.setWindowFlags(Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint | Qt.WindowStaysOnTopHint)
+                    print("Windows stay on top")
+                self.setVisible(True)
 
     #
     #           Function
     #
+    def updateWindowTitle(self):
+        if self.uart_num == 2:
+            self.setWindowTitle(f"{self.uarts.getName_Com0()} - {self.uarts.getName_Com1()}")
+        else:
+            self.setWindowTitle(f"{self.uarts.getName_Com0()}")
+
     def textedit_Resize(self):
         if self.uart_num == 2:
-            self.textEdit_rx_0.move(0, 0)
-            self.textEdit_rx_0.resize(int(self.width()/2 - 1), self.height() - 20)
-            self.textEdit_rx_1.setGeometry(self.textEdit_rx_0.rect())
-            self.textEdit_rx_1.move(self.textEdit_rx_0.rect().topRight() + QPoint(2, 0))
+            self.textEdit_com0.move(0, 0)
+            self.textEdit_com0.resize(int(self.width()/2 - 5), self.height() - 20)
+            self.textEdit_com1.setVisible(True)
+            self.textEdit_com1.setGeometry(self.textEdit_com0.rect())
+            self.textEdit_com1.move(self.textEdit_com0.rect().topRight() + QPoint(10, 0))
         else:
-            self.textEdit_rx_0.resize(self.size() - QSize(0, 20))
+            self.textEdit_com1.setVisible(False)
+            self.textEdit_com0.resize(self.size() - QSize(0, 20))
+        self.updateWindowTitle()
 
     def setConsoleIndex(self, idx: Console):
         self.current_console = idx
         print(f"Console index = {self.current_console}")
 
     def receive_msg(self, textedit:QTextEdit, read_func):
-
         msg_queue = ""
         while True:
             time.sleep(0.05)
@@ -234,7 +246,6 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
                 for msg_item in msg_list[:-1]:
                     now = ""
                     if self.timestamp_enable:
-                        # now = datetime.datetime.now().strftime(f"[%Y%m%d %H%M%S.{'%03d' % (datetime.datetime.now().microsecond / 1e3)}] ")
                         now = datetime.datetime.now().strftime(f"[%H:%M:%S.{'%03d' % (datetime.datetime.now().microsecond / 1e3)}] ")
                     textedit.append(now + msg_item)
                 msg_queue = msg_list[-1]
@@ -254,7 +265,6 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         f.write(log_content)
         f.close()
 
-
     #
     # Message Form
     #
@@ -268,13 +278,17 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         self.message_form.addItem("  1:     Set Console 1")
         self.message_form.addItem("  2:     Set Console 2")
         self.message_form.addItem("  3:     Set Console 1 & 2")
+        self.message_form.addItem("  C:     Clear console")
         self.message_form.addItem("  T:     Toggle timestamp")
         self.message_form.addItem("")
         self.message_form.addItem("------------ Ctrl Key List ------------")
+        self.message_form.addItem("  1:     Show 1 console")
+        self.message_form.addItem("  2:     Show 2 consoles")
         self.message_form.addItem("  S:     Switch console")
         self.message_form.addItem("  R:     Read / Stop uart message")
         self.message_form.addItem("  L:     Save log")
         self.message_form.addItem("  A:     Auto connection")
+        self.message_form.addItem("  T:     Toggle 'Windows stay on top'")
         self.message_form.show()
 
 
