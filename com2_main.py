@@ -12,6 +12,9 @@ import ui.form.com2_window_ui as ui
 from ui.comport_setting import Uart
 from ui.message_form import MessageForm
 
+# import ctypes
+# myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
+# ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Console(Enum):
     INDEX_0 = 0x01
@@ -22,6 +25,8 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+
+        self.setWindowIcon(QIcon('./res/icon.png'))
 
         self.setStyleSheet("background-color:rgb(0,0,0);")
         self.font().setFamily('Courier New')
