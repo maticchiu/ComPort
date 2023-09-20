@@ -5,21 +5,17 @@ from PyQt5.QtGui import *
 
 import datetime
 import time
-from enum import Enum
+# from enum import Enum
 import os
 
 import ui.form.com2_window_ui as ui
-from ui.comport_setting import Uart
+from ui.comport_setting import Uart, Console
 from ui.message_form import MessageForm
 
 # import ctypes
 # myappid = 'mycompany.myproduct.subproduct.version' # arbitrary string
 # ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-class Console(Enum):
-    INDEX_0 = 0x01
-    INDEX_1 = 0x02
-    INDEX_ALL = INDEX_0 or INDEX_1
 
 class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
     def __init__(self):
@@ -30,10 +26,10 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
 
         self.setStyleSheet("background-color:rgb(0,0,0);")
         self.font().setFamily('Courier New')
-        self.font().setPointSize(10)
+        self.font().setPointSize(12)
         self.statusbar.setStyleSheet("color:rgb(128,255,128)")
 
-        self.font_size = 10
+        self.font_size = 12
 
         self.uart_num = 2
         self.current_console:Console = Console.INDEX_ALL
@@ -67,7 +63,14 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
         initTextEdit(self.textEdit_com0)
         initTextEdit(self.textEdit_com1)
 
-        self.uarts.autoConnect()
+        if self.uart_num == 1:
+            uart_num = self.uarts.autoConnect(Console.INDEX_0)
+        else:
+            uart_num = self.uarts.autoConnect()
+        if uart_num <= 1:
+            self.uart_num = 1
+        else:
+            self.uart_num = 2
         self.textedit_Resize()
         self.updateWindowTitle()
 
@@ -138,6 +141,10 @@ class ComportRx(QMainWindow, ui.Ui_ComPortWindow):
                 self.statusbar.showMessage("Clear message")
             case Qt.Key.Key_T:
                 self.timestamp_enable = not self.timestamp_enable
+                if self.timestamp_enable:
+                    self.statusbar.showMessage("Timestamp: On")
+                else:
+                    self.statusbar.showMessage("Timestamp: Off")
 
     def runCtrlKeyEvent(self, pressed_key):
         def setFontSize(textedit:QTextEdit, font_size:int):

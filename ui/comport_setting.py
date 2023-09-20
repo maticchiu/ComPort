@@ -3,12 +3,19 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 
+from enum import Enum
+
 from ui.form.comport_setting_ui import Ui_Form_ComPortSetting
 # from form.comport_setting_ui import Ui_Form_ComPortSetting
 import serial.tools.list_ports
 import serial
 
 UART_TIMEOUT = 0.01
+
+class Console(Enum):
+    INDEX_0 = 0x01
+    INDEX_1 = 0x02
+    INDEX_ALL = INDEX_0 or INDEX_1
 
 class ComPort():
     def __init__(self, combobox_comport:QComboBox, combobox_baudrate:QComboBox, button_connect:QPushButton):
@@ -35,23 +42,24 @@ class ComPort():
             print(f"com is going to open")
             self.open()
 
+    def _isPortUsable(self, port_name:str)->bool:
+        try:
+            ser = serial.Serial(port_name)
+            return True
+        except:
+            return False
+
     def updateComboBox(self):
-        def isPortUsable(port_name:str)->bool:
-            try:
-                ser = serial.Serial(port_name)
-                return True
-            except:
-                return False
 
         self.combobox_comport.clear()
         if self.comport.is_open:
             self.combobox_comport.addItem(self.comport.name)
         else:
             # for com_port_item in serial.tools.list_ports.comports():
-            #     if isPortUsable(com_port_item.name):
+            #     if self._isPortUsable(com_port_item.name):
             #         self.combobox_comport.addItem(com_port_item.name)
             for com_port_name in self.getComNameList():
-                if isPortUsable(com_port_name):
+                if self._isPortUsable(com_port_name):
                     self.combobox_comport.addItem(com_port_name)
 
     def getComNameList(self):
@@ -71,8 +79,7 @@ class ComPort():
         self.comport.flush()
 
     def open(self):
-
-        if not self.comport.is_open:
+        if not self.comport.is_open and self._isPortUsable(self.combobox_comport.currentText()):
             self.comport.baudrate = int(self.combobox_baudrate.currentText())
             self.comport.port = self.combobox_comport.currentText()
             self.comport.timeout = UART_TIMEOUT
@@ -95,6 +102,9 @@ class ComPort():
             return
         self.comport.close()
         self.updateComboBox()
+
+    def is_open(self):
+        return self.comport.is_open
 
     def isExist(self, comport_name:str):
         comport_name_list = self.getComNameList()
@@ -158,13 +168,22 @@ class Uart(QWidget, Ui_Form_ComPortSetting):
         self.com_0.comport = self.com_1.comport
         self.com_1.comport = comport_temp
 
-    def autoConnect(self):
-        self.com_0.updateComboBox()
-        # self.com_0.comport_ToggleConnect()
-        self.com_0.open()
-        self.com_1.updateComboBox()
-        # self.com_1.comport_ToggleConnect()
-        self.com_1.open()
+    def autoConnect(self, comport_index = Console.INDEX_ALL)->int:
+        com_num = 0
+
+        if comport_index == Console.INDEX_0 or comport_index == Console.INDEX_ALL:
+            self.com_0.updateComboBox()
+            self.com_0.open()
+            if self.com_0.is_open():
+                com_num = com_num + 1
+
+        if comport_index == Console.INDEX_1 or comport_index == Console.INDEX_ALL:
+            self.com_1.updateComboBox()
+            self.com_1.open()
+            if self.com_1.is_open():
+                com_num = com_num + 1
+
+        return com_num
 
     def getName_Com0(self):
         return self.com_0.comport.name
